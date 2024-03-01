@@ -55,6 +55,7 @@ local files = deepscan("src")
 
 local lines = {} ---@type string[]
 for key, file in pairs(files) do
+   print("Found",file)
    if file:find(".lua$") then
       for line in love.filesystem.lines(file) do
          table.insert(lines, 1, line)
@@ -72,8 +73,6 @@ for i = 1, #lines, 1 do
       local class_data = mline:match("^%-%-%-@class[%s]*([%s%S]*)") .. ":"
       local class_name, class_inheritance = class_data:match("([%w_.]+)[%s]*:[%s]*([%w_.]*)")
 
-      print("CLASS RAW",class_data)
-      print("CLASS", class_name, "", class_inheritance)
       local class_data = {
          methods = {},
          fields = {},
@@ -88,11 +87,9 @@ for i = 1, #lines, 1 do
             local name, type, comment = (line.."#"):match("^%-%-%-@field[%s]+([%w_]+)[%s]+([^#]+)([%S%s]*)")
             comment = comment:sub(2,-2)
             type = type:gsub("^%s*(.-)%s*$", "%1")
-            print("FIELD",name,type,comment)
             class_data.fields[#class_data.fields+1] = {type=type,name=name,description = #comment ~= 0 and comment or "..."}
          elseif line:find("local[%s]+[%w_]+[%s]*=") then -- class variable name
             class_var = line:match("local[%s]+([%w_]+)[%s]*=")
-            print("CLASSVAR", class_var)
          else
             break
          end
@@ -123,7 +120,7 @@ for i = 1, #lines, 1 do
          local line = lines[i + c]
          if line:find("^%-%-%-@param") then -- PARAMETER
             local parameter = {}
-            local name, meta = line:match("^%-%-%-@param[%W]+([%w_]+)[%W]+([%w%W]*)$")
+            local name, meta = line:match("^%-%-%-@param[%W]+([%w_.]+)[%W]+([%w%W]*)$")
             local type, post = meta:match("^([%S]+)([%w%W]*)")
             parameter.name = name
             parameter.type = type
@@ -164,7 +161,6 @@ for i = 1, #lines, 1 do
          end
       end
       local class = method.func:match("^([%w_*]+)")
-      print("METHOD FUNC",class)
       if not everything[class] then -- no class declared for given table
          everything[class] = {
             methods = {},
@@ -194,6 +190,8 @@ function tprint(tbl, indent)
 end
 
 -->========================================[ BAKE ]=========================================<--
+
+print(" Processing...")
 
 local bake = ""
 for class_name, class_data in pairs(everything) do
@@ -306,11 +304,12 @@ for class_name, class_data in pairs(everything) do
          bake = bake .. "\n"
       end
    end
-   local ok, err = love.filesystem.write(class_name:upper():sub(1,1) .. class_name:lower():sub(2,-1) .. ".md", bake)
+   local filename = class_name:upper():sub(1,1) .. class_name:lower():sub(2,-1) .. ".md"
+   local ok, err = love.filesystem.write(filename, bake)
    if ok then
-      print("saved")
+      print("Saved",filename)
    else
-      print("error saving: " .. err)
+      print("Error saving",filename,err)
    end
 end
 
@@ -329,7 +328,7 @@ end
 
 local ok, err = love.filesystem.write("_Sidebar.md", bake)
 if ok then
-   print("saved _Sidebar")
+   print("Saved","_Sidebar.md")
 else
-   print("error saving: " .. err)
+   print("Error saving","_Sidebar.md",err)
 end
