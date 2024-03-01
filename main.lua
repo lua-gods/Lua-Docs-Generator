@@ -144,7 +144,9 @@ for i = 1, #lines, 1 do
 
             for param in string.gmatch(string.sub(parameters_string, 2, -2) .. ",", "[%s]*([%w_.: ]+),") do
                local name, type = (param .. ":"):match("([%w_]+)[%s]*:[%s]*([%w_.]*)")
-               parameters[#parameters + 1] = { type = (#type ~= 0 and type or "any"), name = name }
+               if name ~= "self" then
+                  parameters[#parameters + 1] = { type = (#type ~= 0 and type or "any"), name = name }
+               end
             end
 
             method.overloads[i] = {
