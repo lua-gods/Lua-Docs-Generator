@@ -87,6 +87,7 @@ for i = 1, #lines, 1 do
          if line:find("^%-%-%-@field") then -- FIELD
             local name, type, comment = (line.."#"):match("^%-%-%-@field[%s]+([%w_]+)[%s]+([^#]+)([%S%s]*)")
             comment = comment:sub(2,-2)
+            type = type:gsub("^%s*(.-)%s*$", "%1")
             print("FIELD",name,type,comment)
             class_data.fields[#class_data.fields+1] = {type=type,name=name,description = #comment ~= 0 and comment or "..."}
          elseif line:find("local[%s]+[%w_]+[%s]*=") then -- class variable name
@@ -309,7 +310,14 @@ end
 
 bake = "# Documentation\n"
 
-for class_name, class_data in pairs(everything) do
+local toc = {}
+for key, value in pairs(everything) do
+   toc[#toc+1] = key
+end
+
+table.sort(toc, function (a, b)return string.upper(a) < string.upper(b)end)
+
+for _, class_name in pairs(toc) do
    bake = bake .. "- ### [" .. class_name:upper():sub(1,1) .. class_name:lower():sub(2,-1) .. "]("..class_name..")" .. "\n"
 end
 
