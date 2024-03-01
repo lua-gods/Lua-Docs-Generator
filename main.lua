@@ -84,6 +84,10 @@ for i = 1, #lines, 1 do
       for o = 1, 1000, 1 do
          local line = lines[i - o]
          if line:find("^%-%-%-@field") then -- FIELD
+            line = line:gsub("@field protected","@field")
+            line = line:gsub("@field private","@field")
+            line = line:gsub("@field public","@field")
+            line = line:gsub("@field package","@field")
             local name, type, comment = (line.."#"):match("^%-%-%-@field[%s]+([%w_]+)[%s]+([^#]+)([%S%s]*)")
             comment = comment:sub(2,-2)
             type = type:gsub("^%s*(.-)%s*$", "%1")
@@ -156,6 +160,7 @@ for i = 1, #lines, 1 do
             table.insert(method.overloads[1].returns, 1, type)
          elseif line:find("^%-%-%-") then -- DESCRIPTION
             table.insert(method.description, 1, line:sub(4, -1))
+         elseif line:find("^%-%-%-@") then -- OTHER
          else
             break
          end
