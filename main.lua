@@ -97,6 +97,7 @@ for i = 1, #lines, 1 do
             break
          end
       end
+      class_data.class_name = class_name
       class_data.class_var_name = class_var
       table.sort(class_data.fields, function (a, b)return string.upper(a.name) < string.upper(b.name)end)
       everything[class_var] = class_data
@@ -197,8 +198,11 @@ end
 local bake = ""
 for class_name, class_data in pairs(everything) do
    bake = ""
+   if class_data.class_name then
+      bake = bake .. "### Class Name: `"..class_data.class_name .. "`\n"
+   end
    if class_data.inheritance then
-      bake = bake .. "## Inherits from: `"..class_data.inheritance.."`\n"
+      bake = bake .. "Inherits from: `"..class_data.inheritance.."`\n"
    end
    for key, line in pairs(class_data.description) do
       bake = bake .. line .. "\n"
