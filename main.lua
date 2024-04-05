@@ -150,14 +150,15 @@ for i = 1, #lines, 1 do
                parameters_string, return_string = line:match("^%-%-%-@overload fun(%([%s%S]*%)):%f[ ]([%s%S]*)")
             else
                parameters_string = line:match("^%-%-%-@overload fun(%([%s%S]*%))")
-               return_string = "nil"
             end
             local i = #method.overloads + 1
 
             -- split returns in an overload
             local returns = {}
-            for word in string.gmatch((return_string) .. ",", "[%s%S]*,") do
-               returns[#returns + 1] = word:sub(1, -2)
+            if return_string then
+               for word in string.gmatch((return_string) .. ",", "[%s%S]*,") do
+                  returns[#returns + 1] = word:sub(1, -2)
+               end
             end
 
             for param in string.gmatch(string.sub(parameters_string, 2, -2) .. ",", "[%s]*([%w_.: ]+),") do
@@ -317,9 +318,14 @@ for class_name, class_data in pairs(everything) do
    
          -- Method returns
          if #overloads.returns ~= 0 then
-            bake = bake .. "### Returns\n"
-            for _, query in pairs(overloads.returns) do
-               bake = bake .. "  - `" .. query .. "`\n"
+            if #overloads.returns == 1 then
+               bake = bake .. "### Returns"
+               bake = bake .. " `" .. overloads.returns[1] .. "`\n"
+            else
+               bake = bake .. "### Returns\n"
+               for _, query in pairs(overloads.returns) do
+                  bake = bake .. "  - `" .. query .. "`\n"
+               end
             end
          end
          bake = bake .. "\n"
