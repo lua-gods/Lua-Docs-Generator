@@ -70,15 +70,16 @@ everything = {}
 for i = 1, #lines, 1 do
    local mline = lines[i]
    if mline:find("^%-%-%-@class") then
-      local class_data = mline:match("^%-%-%-@class[%s]*([%s%S]*)") .. ":"
-      local class_name, class_inheritance = class_data:match("([%w_.]+)[%s]*:[%s]*([%w_.]*)")
+      local class_data = mline:match("^%-%-%-@class[%s]*([%s%S]*)")
+      local class_name, class_inheritance = class_data:match("^([%w_.]+)[%s]*:?(.*)")
+      local inheritance, comment = class_inheritance:match(":?([%w_.]*).*#(.*)$")
 
       local class_data = {
          methods = {},
          fields = {},
-         description = {}
+         description = comment
       }
-      if #class_inheritance ~= 0 then class_data.inheritance = class_inheritance end
+      if class_inheritance:find(":") then class_data.inheritance = inheritance end
       local class_var = class_name
       class_data.class_name = class_name
       for o = 1, 1000, 1 do
@@ -224,8 +225,8 @@ for class_name, class_data in pairs(everything) do
    if class_data.inheritance then
       bake = bake .. "Inherits from: `"..class_data.inheritance.."`\n"
    end
-   for key, line in pairs(class_data.description) do
-      bake = bake .. line .. "\n"
+   if class_data.description then
+      bake = bake .. class_data.description .. "\n"
    end
 
    if #class_data.fields > 0 then
