@@ -135,12 +135,18 @@ for i = 1, #lines, 1 do
             table.insert(method.overloads[1].parameters, 1, parameter)
          elseif line:find("^%-%-%-@overload") then -- OVERLOAD
             local parameters = {}
-            local parameters_string, return_string = line:match("^%-%-%-@overload fun(%([%s%S]*%)):[%s]*([%s%S]*)")
+            local parameters_string, return_string
+            if line:match(":[%s]([%S])[%s]*$") then
+               parameters_string, return_string = line:match("^%-%-%-@overload fun(%([%s%S]*%)):%f[ ]([%s%S]*)")
+            else
+               parameters_string = line:match("^%-%-%-@overload fun(%([%s%S]*%))")
+               return_string = "nil"
+            end
             local i = #method.overloads + 1
 
             -- split returns in an overload
             local returns = {}
-            for word in string.gmatch(return_string .. ",", "[%s%S]*,") do
+            for word in string.gmatch((return_string) .. ",", "[%s%S]*,") do
                returns[#returns + 1] = word:sub(1, -2)
             end
 
