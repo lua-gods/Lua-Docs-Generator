@@ -84,14 +84,24 @@ for i = 1, #lines, 1 do
       for o = 1, 1000, 1 do
          local line = lines[i - o]
          if line:find("^%-%-%-@field") then -- FIELD
-            line = line:gsub("@field protected","@field")
-            line = line:gsub("@field private","@field")
-            line = line:gsub("@field public","@field")
-            line = line:gsub("@field package","@field")
+            local special
+            if line:find("^%-%-%-@field protected") then
+               line = line:gsub("@field protected","@field")
+               special = "protected"
+            elseif line:find("^%-%-%-@field private") then
+               line = line:gsub("@field private","@field")
+               special = "private"
+            elseif line:find("^%-%-%-@field public") then
+               line = line:gsub("@field public","@field")
+               special = "public"
+            elseif line:find("^%-%-%-@field package") then
+               line = line:gsub("@field package","@field")
+               special = "package"
+            end
             local name, type, comment = (line.."#"):match("^%-%-%-@field[%s]+([%w_]+)[%s]+([^#]+)([%S%s]*)")
             comment = comment:sub(2,-2)
             type = type:gsub("^%s*(.-)%s*$", "%1")
-            class_data.fields[#class_data.fields+1] = {type=type,name=name,description = #comment ~= 0 and comment or "..."}
+            class_data.fields[#class_data.fields+1] = {type=type,name=name,description = #comment ~= 0 and comment or "...",special = special}
          elseif line:find("local[%s]+[%w_]+[%s]*=") then -- class variable name
             class_var = line:match("local[%s]+([%w_]+)[%s]*=")
          else
@@ -220,13 +230,13 @@ for class_name, class_data in pairs(everything) do
    if #class_data.fields > 0 then
       local has_events = false
       bake = bake .. "# Properties\n"
-      bake = bake .. "|Type|Field|Description|\n"
-      bake = bake .. "|-|-|-|\n"
+      bake = bake .. "|Type|Field|Description| |\n"
+      bake = bake .. "|-|-|-|-|\n"
       for _, field in pairs(class_data.fields) do
          if field.type:find("EventLib") then
             has_events = true
          else
-            bake = bake .. "|`"..(field.type:gsub("|", "｜")).."`|"..field.name.."|"..field.description:gsub("|", "｜").."|\n"
+            bake = bake .. "|`"..(field.type:gsub("|", "｜")).."`|"..field.name.."|"..field.description:gsub("|", "｜").."|"..(field.special or " ").."|\n"
          end
       end
       if has_events then
