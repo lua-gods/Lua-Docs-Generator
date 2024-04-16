@@ -7,7 +7,7 @@
 * This Project is heavily biased towards my annotation structure.
 
 # How to use
-simply dump your scripts into the `src` folder  
+simply dump your scripts into a folder called `src` in the same place as where `main.lua` is  
 once ran its gonna output at `%appdata%/LOVE/<root-folder-name>/`
 
 # How it works
