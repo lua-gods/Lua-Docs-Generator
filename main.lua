@@ -67,11 +67,13 @@ everything = {}
 
 
 -->====================[ CLASS SCRAPING ]====================<--
+local unknowni = 0
 for i = 1, #lines, 1 do
    local mline = lines[i]
    if mline:find("^%-%-%-@class") then
       local class_data = mline:match("^%-%-%-@class[%s]*([%s%S]*)")
       local class_name, class_inheritance = class_data:match("^([%w_.]+)[%s]*:?(.*)")
+      class_inheritance = class_inheritance or ""
       local inheritance, comment = class_inheritance:match(":?([%w_.]*).*#(.*)$")
 
       local class_data = {
@@ -100,8 +102,16 @@ for i = 1, #lines, 1 do
                special = "package"
             end
             local name, type, comment = (line.."#"):match("^%-%-%-@field[%s]+([%w_]+)[%s]+([^#]+)([%S%s]*)")
-            comment = comment:sub(2,-2)
-            type = type:gsub("^%s*(.-)%s*$", "%1")
+            if comment then
+               comment = comment:sub(2,-2)
+            else
+               comment = ""
+            end
+            if type then
+               type = type:gsub("^%s*(.-)%s*$", "%1")
+            else
+               type = ""
+            end
             class_data.fields[#class_data.fields+1] = {type=type,name=name,description = #comment ~= 0 and comment or "...",special = special}
          elseif line:find("local[%s]+[%w_]+[%s]*=") then -- class variable name
             class_var = line:match("local[%s]+([%w_]+)[%s]*=")
@@ -111,8 +121,13 @@ for i = 1, #lines, 1 do
       end
       class_data.class_name = class_name
       class_data.class_var_name = class_var
-      table.sort(class_data.fields, function (a, b)return string.upper(a.name) < string.upper(b.name)end)
-      everything[class_var] = class_data
+      table.sort(class_data.fields, function (a, b)return string.upper(a.name or "") < string.upper(b.name or "")end)
+      if class_var or class_name  then
+         everything[class_var or class_name] = class_data
+      else
+         unknowni = unknowni + 1
+         everything["unknown"..tostring(unknowni)] = class_data
+      end
    end
 end
 
@@ -139,9 +154,11 @@ for i = 1, #lines, 1 do
             local type, post = meta:match("^([%S]+)([%w%W]*)")
             parameter.name = name
             parameter.type = type
-            local desc = post:match("[%s]*#[%s]*([%W%w]*)$")
-            if desc then
-               parameter.desc = desc
+            if post then
+               local desc = post:match("[%s]*#[%s]*([%W%w]*)$")
+               if desc then
+                  parameter.desc = desc
+               end
             end
             table.insert(method.overloads[1].parameters, 1, parameter)
          elseif line:find("^%-%-%-@overload") then -- OVERLOAD
@@ -225,7 +242,7 @@ for class_name, class_data in pairs(everything) do
    if class_data.inheritance then
       bake = bake .. "Inherits from: `"..class_data.inheritance.."`\n"
    end
-   if class_data.description then
+   if type(class_data.description) == "string" then
       bake = bake .. class_data.description .. "\n"
    end
 
@@ -238,7 +255,7 @@ for class_name, class_data in pairs(everything) do
          if field.type:find("EventLib") then
             has_events = true
          else
-            bake = bake .. "|`"..(field.type:gsub("|", "｜")).."`|"..field.name.."|"..field.description:gsub("|", "｜").."|"..(field.special or " ").."|\n"
+            bake = bake .. "|`"..(field.type:gsub("|", "｜")).."`|"..(field.name or "").."|"..field.description:gsub("|", "｜").."|"..(field.special or " ").."|\n"
          end
       end
       if has_events then
@@ -267,7 +284,7 @@ for class_name, class_data in pairs(everything) do
    
          local params = ""
          for key, value in pairs(func.parameters) do
-            params = params .. value.name .. " : " .. value.type:gsub("|", "｜") .. (key ~= #func.parameters and ", " or "")
+            params = params .. value.name .. " : " .. (value.type and value.type:gsub("|", "｜") or "") .. (key ~= #func.parameters and ", " or "")
          end
    
          local params_no_type = ""
@@ -308,7 +325,7 @@ for class_name, class_data in pairs(everything) do
          if #overloads.parameters ~= 0 then
             bake = bake .. "### Arguments\n"
             for i, param in pairs(overloads.parameters) do
-               bake = bake .. "- `" .. param.type .. "` `" .. param.name .. "`\n"
+               bake = bake .. "- `" .. (param.type or "") .. "` `" .. (param.name or "") .. "`\n"
                if param.desc then
                   bake = bake .. "  - " .. param.desc .. "\n"
                else
