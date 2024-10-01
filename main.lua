@@ -195,7 +195,7 @@ for i = 1, #lines, 1 do
          elseif line:find("^%-%-%-@return") then -- RETURN
             local type = line:match("^%-%-%-@return[%s]*([%S]+)")
             table.insert(method.overloads[1].returns, 1, type)
-         elseif line:find("^%-%-%-") then -- DESCRIPTION
+         elseif line:find("^%-%-%-[^@]") then -- DESCRIPTION
             table.insert(method.description, 1, line:sub(4, -1))
          elseif line:find("^%-%-%-@") then -- OTHER
          else
