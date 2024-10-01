@@ -115,6 +115,8 @@ for i = 1, #lines, 1 do
             class_data.fields[#class_data.fields+1] = {type=type,name=name,description = #comment ~= 0 and comment or "...",special = special}
          elseif line:find("local[%s]+[%w_]+[%s]*=") then -- class variable name
             class_var = line:match("local[%s]+([%w_]+)[%s]*=")
+         elseif line:find("^%-%-%-") then -- margin
+         -- do nothing lmao
          else
             break
          end
